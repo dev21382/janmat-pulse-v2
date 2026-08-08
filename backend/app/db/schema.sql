@@ -29,3 +29,17 @@ CREATE TABLE IF NOT EXISTS forecasts (
     predicted_sentiment REAL NOT NULL,
     PRIMARY KEY (topic_id, generated_utc, horizon_day)
 );
+
+CREATE TABLE IF NOT EXISTS promise_atoms (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    party_id TEXT NOT NULL,
+    page INTEGER NOT NULL,
+    number TEXT,
+    text TEXT NOT NULL,
+    taxonomy_category TEXT NOT NULL,
+    matched_keywords TEXT,            -- JSON array, for auditability of the tag
+    quantified INTEGER NOT NULL       -- 0/1: has a number/amount/date, vs. purely directional
+);
+
+CREATE INDEX IF NOT EXISTS idx_atoms_category ON promise_atoms(taxonomy_category);
+CREATE INDEX IF NOT EXISTS idx_atoms_party ON promise_atoms(party_id);

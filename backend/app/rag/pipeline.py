@@ -4,7 +4,9 @@ from app.rag.chunk import chunk_text
 from app.rag.embeddings import fit_vectorizer
 from app.rag.generator import generate_answer, generative_available
 from app.rag.index_store import build_and_save, index_exists
-from app.rag.ingest import available_manifesto_texts, ingest_all_manifestos
+from app.rag.ingest import available_manifesto_pages, available_manifesto_texts, ingest_all_manifestos
+from app.rag.promise_atoms import extract_atoms
+from app.rag.promise_store import clear_atoms, count_atoms, save_atoms
 from app.rag.retriever import invalidate_cache, retrieve
 from app.rag.sources import MANIFESTOS
 
@@ -35,11 +37,19 @@ def build_index(force: bool = False) -> dict:
     build_and_save(all_chunks, vectorizer, matrix)
     invalidate_cache()
 
+    clear_atoms()
+    atom_total = 0
+    for source in available_manifesto_pages():
+        atoms = extract_atoms(source["pages"], source["party_id"])
+        save_atoms(atoms)
+        atom_total += len(atoms)
+
     return {
         "status": "built",
         "downloads": download_results,
         "parties_indexed": [s["party_id"] for s in texts],
         "chunk_count": len(all_chunks),
+        "promise_atom_count": atom_total,
     }
 
 
@@ -49,6 +59,7 @@ def index_status() -> dict:
     return {
         "index_built": index_exists(),
         "generative_available": generative_available(),
+        "promise_atom_count": count_atoms(),
         "parties": [
             {**m, "ingested": _text_path(m["party_id"]).exists()} for m in MANIFESTOS
         ],

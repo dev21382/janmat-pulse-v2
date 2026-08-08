@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import FeedList from "../components/FeedList";
+import ScoreLegend from "../components/ScoreLegend";
+import ScoreSummaryCard from "../components/ScoreSummaryCard";
 import SentimentChart from "../components/SentimentChart";
 import TopicSelector from "../components/TopicSelector";
 import { api, FeedItem, ForecastResponse, Topic } from "../lib/api";
@@ -52,6 +54,10 @@ export default function Dashboard() {
       </header>
 
       <TopicSelector topics={topics} active={activeTopic} onSelect={setActiveTopic} />
+
+      <ScoreLegend />
+
+      {activeTopic && <ScoreSummaryCard topicId={activeTopic} hue={activeMeta?.hue ?? "#9184d9"} />}
 
       <section className="glass rounded-2xl p-5">
         <div className="flex items-center justify-between mb-2">

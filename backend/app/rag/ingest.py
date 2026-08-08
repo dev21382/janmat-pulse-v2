@@ -1,3 +1,4 @@
+import json
 import logging
 
 import httpx
@@ -24,6 +25,10 @@ def _text_path(party_id: str):
     return MANIFESTO_DIR / f"{party_id}.txt"
 
 
+def _pages_path(party_id: str):
+    return MANIFESTO_DIR / f"{party_id}.pages.json"
+
+
 def download_manifesto(source: dict, timeout: float = 45.0) -> bool:
     party_id = source["party_id"]
     text_path = _text_path(party_id)
@@ -41,8 +46,8 @@ def download_manifesto(source: dict, timeout: float = 45.0) -> bool:
 
     try:
         reader = PdfReader(io.BytesIO(pdf_bytes))
-        text = "\n\n".join(page.extract_text() or "" for page in reader.pages)
-        text = ftfy.fix_text(text)
+        pages = [ftfy.fix_text(page.extract_text() or "") for page in reader.pages]
+        text = "\n\n".join(pages)
     except Exception as exc:
         log.warning("manifesto pdf parse failed party=%s err=%s", party_id, exc)
         return False
@@ -53,7 +58,10 @@ def download_manifesto(source: dict, timeout: float = 45.0) -> bool:
 
     _pdf_path(party_id).write_bytes(pdf_bytes)
     text_path.write_text(text, encoding="utf-8")
-    log.info("manifesto ingested party=%s chars=%d", party_id, len(text))
+    _pages_path(party_id).write_text(
+        json.dumps([{"page": i + 1, "text": p} for i, p in enumerate(pages)]), encoding="utf-8"
+    )
+    log.info("manifesto ingested party=%s chars=%d pages=%d", party_id, len(text), len(pages))
     return True
 
 
@@ -70,4 +78,14 @@ def available_manifesto_texts() -> list[dict]:
         path = _text_path(source["party_id"])
         if path.exists():
             out.append({**source, "text": path.read_text(encoding="utf-8")})
+    return out
+
+
+def available_manifesto_pages() -> list[dict]:
+    out = []
+    for source in MANIFESTOS:
+        path = _pages_path(source["party_id"])
+        if path.exists():
+            pages = json.loads(path.read_text(encoding="utf-8"))
+            out.append({**source, "pages": pages})
     return out

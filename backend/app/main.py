@@ -6,7 +6,14 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.api import routes_feed, routes_forecast, routes_rag, routes_topics
+from app.api import (
+    routes_feed,
+    routes_forecast,
+    routes_rag,
+    routes_scorecard,
+    routes_scoring,
+    routes_topics,
+)
 from app.db.database import init_db
 from app.rag.pipeline import build_index
 from app.scheduler import shutdown_scheduler, start_scheduler
@@ -36,6 +43,8 @@ app.include_router(routes_topics.router, prefix="/api")
 app.include_router(routes_feed.router, prefix="/api")
 app.include_router(routes_forecast.router, prefix="/api")
 app.include_router(routes_rag.router, prefix="/api")
+app.include_router(routes_scoring.router, prefix="/api")
+app.include_router(routes_scorecard.router, prefix="/api")
 
 
 @app.get("/api/health")

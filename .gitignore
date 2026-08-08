@@ -7,11 +7,7 @@ node_modules/
 frontend/dist/
 backend/static/
 
-backend/data/*.db
-backend/data/*.db-*
-backend/data/manifestos/*.pdf
-backend/data/manifestos/*.txt
-backend/data/index/*
+backend/data/
 
 .env
 *.log

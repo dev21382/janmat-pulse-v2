@@ -8,18 +8,24 @@ const linkClass = ({ isActive }: { isActive: boolean }) =>
 export default function Nav() {
   return (
     <div className="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 pt-4">
-      <nav className="max-w-5xl mx-auto glass rounded-2xl px-4 py-3 flex items-center justify-between">
+      <nav className="max-w-6xl mx-auto glass rounded-2xl px-4 py-3 flex items-center justify-between flex-wrap gap-2">
         <span className="font-semibold tracking-tight">Janmat Pulse</span>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 flex-wrap">
           <NavLink to="/" end className={linkClass}>
             Dashboard
           </NavLink>
           <NavLink to="/manifestos" className={linkClass}>
             Manifesto Chat
           </NavLink>
+          <NavLink to="/compare" className={linkClass}>
+            Compare
+          </NavLink>
+          <NavLink to="/scorecard" className={linkClass}>
+            Scorecard
+          </NavLink>
         </div>
         <a
-          href="https://github.com/dev21382/public-opinion-aggregator"
+          href="https://github.com/dev21382/janmat-pulse-v2"
           target="_blank"
           rel="noreferrer"
           className="hidden sm:block text-xs font-mono uppercase tracking-wider text-[#9397ab] hover:text-white"
