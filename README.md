@@ -122,6 +122,15 @@ upgrades independently when its key is set — none of them depend on each other
 Set these in your deployment platform's secrets (Render → Environment). Never commit them to git —
 see `.env.example`.
 
+**Operational note on the Groq free tier**: it caps at 100,000 tokens/day (separate from the
+14,400 requests/day limit). Promise-atom taxonomy tagging classifies ~600 atoms across ~30 batched
+calls at startup, and free-tier hosting has no persistent disk, so **every redeploy re-runs that
+classification from scratch**. A couple of redeploys in the same day can exhaust the daily token
+budget on their own, well before generative RAG usage even factors in. When that happens the app
+does exactly what it's designed to do — falls back to keyword tagging and serves cited excerpts
+instead of generated answers, both clearly labeled — rather than erroring. This was observed and
+confirmed in this project's own deploy logs, not a hypothetical.
+
 ## Data sources
 
 - Reddit: `r/india`, `r/IndianPolitics`, `r/IndiaSpeaks`, `r/worldnews` via public search JSON.
