@@ -1,6 +1,7 @@
 import { Route, Routes } from "react-router-dom";
 import Nav from "./components/Nav";
 import Dashboard from "./pages/Dashboard";
+import ElectoralHistory from "./pages/ElectoralHistory";
 import ManifestoChat from "./pages/ManifestoChat";
 import PromiseCompare from "./pages/PromiseCompare";
 import Scorecard from "./pages/Scorecard";
@@ -17,6 +18,7 @@ export default function App() {
           <Route path="/compare" element={<PromiseCompare />} />
           <Route path="/scorecard" element={<Scorecard />} />
           <Route path="/search" element={<Search />} />
+          <Route path="/electoral-history" element={<ElectoralHistory />} />
         </Routes>
       </main>
     </div>

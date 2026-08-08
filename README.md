@@ -1,4 +1,4 @@
-# Janmat Pulse v2 — Political Intelligence Platform (Phase 0 + 1a + 1b)
+# Janmat Pulse v2 — Political Intelligence Platform (Phase 0 + 1a + 1b + 2 seed)
 
 Builds on [janmat-pulse](https://github.com/dev21382/janmat-pulse) — live sentiment tracking on Indian
 political topics, a forecast trained on that real data, and manifesto intelligence over the 2024 Lok
@@ -12,9 +12,16 @@ first request after idle time can take ~50s to wake up.
 
 ## New in this revision
 
-Three rounds of changes so far: the trust layer + manifesto/scorecard structure (Phase 0 + 1a), then
+Four rounds of changes so far: the trust layer + manifesto/scorecard structure (Phase 0 + 1a), then
 replacing rule-based/keyword approximation with real ML models and expanding the ingested data, then
-Phase 1b's open search and evidence panel:
+Phase 1b's open search and evidence panel, then a real electoral-history foundation for Pillar B:
+
+- **Electoral history (Phase 2 seed, B1-lite)** — real, Wikipedia-sourced national Lok Sabha results
+  (seats + vote share) for 2019 and 2024, with computed swing per party, party splits (Shiv Sena, NCP)
+  called out explicitly rather than left to mislead a bare comparison. Deliberately **not** a seat
+  projection: the PRD's own B6 rule requires backtesting against 3-4+ elections before any forecast
+  ships, and national vote share doesn't translate linearly to seats under FPTP anyway — see
+  [ROADMAP.md](ROADMAP.md) for exactly what a real projection would still need.
 
 - **Open search + evidence panel (Phase 1b, A8/A10)** — a free-text search bar not limited to the six
   curated dashboard topics. Queries are expanded via a hand-curated India-politics synonym/
@@ -62,14 +69,16 @@ the limitations are stated plainly rather than papered over.
 | Delivery Scorecard | Real data model; a small **hand-curated, independently-sourced seed dataset** (4 entries, each cited to PIB/CAG/PRS), not a live budget/PFMS/CAG ingestion pipeline — see [ROADMAP.md](ROADMAP.md). |
 | Open search (any topic, not just the curated 6) | Real, live, on-demand fan-out to Reddit + Google News with query expansion, per-source timeout budgets, and a bounded 15-minute cache. GDELT is excluded from this live path (self-throttled, ingestion-only). |
 | Evidence panel (top-2-by-reach per sentiment bucket) | Real. Reach is a genuine engagement percentile for Reddit (has upvotes); News items have no engagement metric at all, so their reach is an honestly-labeled recency percentile instead, never presented as equivalent to real engagement. Not CIB-filtered (see ROADMAP.md — no bot-laden source to filter yet). |
+| Electoral history (2019 vs 2024) | Real, Wikipedia-sourced national results and computed swing per party. Explicitly historical data, not a seat projection — see ROADMAP.md for why a real forecast needs more than this. |
 
 ## Architecture
 
 ```
-frontend/   React + Vite + TypeScript + Tailwind — Dashboard, Search, Manifesto Chat, Compare, Scorecard
+frontend/   React + Vite + TypeScript + Tailwind — Dashboard, Search, Manifesto Chat, Compare,
+            Scorecard, Electoral History
 backend/    FastAPI — ingestion (Reddit/News/GDELT), sentiment (ML + fallback), forecast, RAG
             pipeline (retrieval + promise-atoms + LLM taxonomy), scorecard, on-demand search
-            (query expansion + evidence panel), REST API
+            (query expansion + evidence panel), electoral history, REST API
 Dockerfile  Multi-stage build: builds the frontend, serves it as static files from FastAPI
 ```
 
@@ -122,3 +131,6 @@ see `.env.example`.
   [CPI(M) Manifesto](https://cpim.org/wp-content/uploads/old/documents/election_manifesto_english_april_2024.pdf),
   [TMC Didir Shopoth](https://data.opencity.in/dataset/76e54184-f294-44e4-a40c-8594ccb410c8/resource/628261ee-a164-4760-a475-7a7e10d78d44/download/5e073a4f-f293-4cb0-90f1-bf5847a0015b.pdf),
   [DMK Manifesto](https://data.opencity.in/dataset/76e54184-f294-44e4-a40c-8594ccb410c8/resource/c86a0519-1a32-407c-8381-41659734f9a2/download/a7964b61-ee79-4f84-9e1b-e3e28be52e04.pdf).
+- Electoral history: [2019 results](https://en.wikipedia.org/wiki/Results_of_the_2019_Indian_general_election),
+  [2024 results](https://en.wikipedia.org/wiki/Results_of_the_2024_Indian_general_election) (Wikipedia,
+  compiling Election Commission of India data).

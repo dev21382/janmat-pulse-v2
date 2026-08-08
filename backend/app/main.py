@@ -7,6 +7,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.api import (
+    routes_electoral,
     routes_feed,
     routes_forecast,
     routes_rag,
@@ -47,6 +48,7 @@ app.include_router(routes_rag.router, prefix="/api")
 app.include_router(routes_scoring.router, prefix="/api")
 app.include_router(routes_scorecard.router, prefix="/api")
 app.include_router(routes_search.router, prefix="/api")
+app.include_router(routes_electoral.router, prefix="/api")
 
 
 @app.get("/api/health")

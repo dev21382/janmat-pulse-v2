@@ -26,6 +26,9 @@ export default function Nav() {
           <NavLink to="/scorecard" className={linkClass}>
             Scorecard
           </NavLink>
+          <NavLink to="/electoral-history" className={linkClass}>
+            Electoral History
+          </NavLink>
         </div>
         <a
           href="https://github.com/dev21382/janmat-pulse-v2"

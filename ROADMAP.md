@@ -2,8 +2,9 @@
 
 This repo implements a deliberately scoped slice of the full Political Intelligence Platform PRD
 it's built against, in the PRD's own prioritization order: **Phase 0 (trust foundations) → Phase 1a
-(Manifesto RAG upgrade + Scorecard v1) → Phase 1b (search + evidence panel)**. Everything below is
-what's *not* built, and why — so this reads as a scoped plan, not a silent gap.
+(Manifesto RAG upgrade + Scorecard v1) → Phase 1b (search + evidence panel) → Phase 2 seed
+(electoral history foundation)**. Everything below is what's *not* built, and why — so this reads
+as a scoped plan, not a silent gap.
 
 ## What's built, by phase
 
@@ -29,6 +30,12 @@ what's *not* built, and why — so this reads as a scoped plan, not a silent gap
   of the top-2-by-reach items per sentiment bucket — reach is a real engagement percentile for
   Reddit (has upvotes) and an honestly-labeled recency percentile for News (which has no
   engagement metric at all, so nothing is fabricated there).
+- **Phase 2 seed — electoral history (Pillar B foundation, B1-lite)**: real, Wikipedia-sourced
+  national Lok Sabha results (seats + vote share) for 2019 and 2024, with computed seat/vote-share
+  swing per party. Party splits (Shiv Sena, NCP) between the two elections are called out
+  explicitly rather than left to make a bare year-over-year comparison misleading. This is
+  presented as historical data only — see immediately below for why an actual seat projection
+  isn't built on top of it yet.
 
 ## Deferred, and why
 
@@ -39,7 +46,7 @@ what's *not* built, and why — so this reads as a scoped plan, not a silent gap
 | **Multimodal ingestion — OCR/Whisper (A11)** | Same free-tier memory constraint; async transcription queues need their own worker process and storage, which is a real infra project, not an add-on. |
 | **YouTube ingestion** | Free but quota-capped (10,000 units/day per the PRD) — not wired up yet; GDELT and RSS covered more ground per engineering hour spent so far. |
 | **Poll aggregation (B3)** | Needs a maintained, licensed feed of published polls with a track-record weighting scheme — no free source exists; this is a real data-partnership problem, not an engineering one. Still blocked as of Phase 1b. |
-| **Seat projection / Monte Carlo forecasting (Pillar B)** | Explicitly gated by the PRD itself on backtesting against 2019/2024 before going live — shipping an unvalidated forecaster would violate the PRD's own non-negotiable rule, not just skip a nice-to-have. |
+| **Seat projection / Monte Carlo forecasting (Pillar B)** | Explicitly gated by the PRD itself (B6) on backtesting against **3-4+ completed elections** before going live. What's sourced so far is national-total results for exactly two elections (2019, 2024) — not enough to satisfy that rule, and not constituency-level, which a real uniform-swing or Monte Carlo model needs (India's FPTP system means national vote share doesn't translate linearly to seats). Extrapolating a seat projection from what we have would be exactly the kind of unvalidated forecast the PRD calls out as the fastest way to lose institutional trust — so the electoral history page stops at real historical comparison and stays there until genuine constituency-level, multi-election data is sourced. |
 | **Live PFMS/CAG/budget-document pipeline (D1, beyond the seed set)** | PFMS and CAG don't expose clean public APIs — real ingestion means parsing scheme-level PDFs and portals per ministry, a multi-week data-engineering effort on its own. The seed dataset demonstrates the target methodology; it is not a substitute for that pipeline. |
 | **IT Rules 2026 / ECI labelling, silence-period cutoffs, multi-tenant data walls** | Real legal/compliance requirements for a live client-facing product, but they're operational controls, not code that makes sense to half-build against zero actual clients or actual AI-generated content in this repo yet. |
 

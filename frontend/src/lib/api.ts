@@ -139,6 +139,23 @@ export type SearchResponse = {
   cache_hit?: boolean;
 };
 
+export type YearResult = { seats: number; vote_share_pct: number | null } | null;
+export type ElectoralPartyRow = {
+  party_id: string;
+  party_name: string;
+  hue: string;
+  "2019": YearResult;
+  "2024": YearResult;
+  seat_swing: number | null;
+  vote_share_swing: number | null;
+  note: string | null;
+};
+export type ElectoralHistory = {
+  sources: { "2019": string; "2024": string };
+  methodology_note: string;
+  parties: ElectoralPartyRow[];
+};
+
 async function json<T>(res: Response): Promise<T> {
   if (!res.ok) throw new Error(`API error ${res.status}`);
   return res.json();
@@ -164,4 +181,5 @@ export const api = {
   scorecardRollup: () =>
     fetch("/api/scorecard/rollup").then((r) => json<{ rollups: ScorecardRollup[]; status_options: string[] }>(r)),
   search: (q: string) => fetch(`/api/search?q=${encodeURIComponent(q)}`).then((r) => json<SearchResponse>(r)),
+  electoralHistory: () => fetch("/api/electoral/history").then((r) => json<ElectoralHistory>(r)),
 };
