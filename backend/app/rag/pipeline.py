@@ -5,6 +5,7 @@ from app.rag.embeddings import fit_vectorizer
 from app.rag.generator import generate_answer, generative_available
 from app.rag.index_store import build_and_save, index_exists
 from app.rag.ingest import available_manifesto_pages, available_manifesto_texts, ingest_all_manifestos
+from app.rag.llm_taxonomy import classify_batch as llm_classify_batch
 from app.rag.promise_atoms import extract_atoms
 from app.rag.promise_store import clear_atoms, count_atoms, save_atoms
 from app.rag.retriever import invalidate_cache, retrieve
@@ -41,6 +42,7 @@ def build_index(force: bool = False) -> dict:
     atom_total = 0
     for source in available_manifesto_pages():
         atoms = extract_atoms(source["pages"], source["party_id"])
+        atoms = llm_classify_batch(atoms)
         save_atoms(atoms)
         atom_total += len(atoms)
 
@@ -55,10 +57,14 @@ def build_index(force: bool = False) -> dict:
 
 def index_status() -> dict:
     from app.rag.ingest import _text_path
+    from app.rag.llm_taxonomy import available as llm_taxonomy_available
+    from app.sentiment.hf_classifier import available as hf_sentiment_available
 
     return {
         "index_built": index_exists(),
         "generative_available": generative_available(),
+        "taxonomy_llm_available": llm_taxonomy_available(),
+        "sentiment_ml_available": hf_sentiment_available(),
         "promise_atom_count": count_atoms(),
         "parties": [
             {**m, "ingested": _text_path(m["party_id"]).exists()} for m in MANIFESTOS

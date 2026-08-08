@@ -13,14 +13,15 @@ def save_atoms(atoms: list[dict]) -> None:
         for a in atoms:
             cur.execute(
                 """INSERT INTO promise_atoms
-                   (party_id, page, number, text, taxonomy_category, matched_keywords, quantified)
-                   VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                   (party_id, page, number, text, taxonomy_category, taxonomy_method, matched_keywords, quantified)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     a["party_id"],
                     a["page"],
                     a["number"],
                     a["text"],
                     a["taxonomy_category"],
+                    a.get("taxonomy_method", "keyword"),
                     json.dumps(a["matched_keywords"]),
                     1 if a["quantified"] else 0,
                 ),

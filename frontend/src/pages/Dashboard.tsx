@@ -4,7 +4,7 @@ import ScoreLegend from "../components/ScoreLegend";
 import ScoreSummaryCard from "../components/ScoreSummaryCard";
 import SentimentChart from "../components/SentimentChart";
 import TopicSelector from "../components/TopicSelector";
-import { api, FeedItem, ForecastResponse, Topic } from "../lib/api";
+import { api, FeedItem, ForecastResponse, RagStatus, Topic } from "../lib/api";
 
 const METHOD_LABEL: Record<string, string> = {
   lstm: "LSTM forecast",
@@ -18,12 +18,14 @@ export default function Dashboard() {
   const [forecast, setForecast] = useState<ForecastResponse | null>(null);
   const [feed, setFeed] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [ragStatus, setRagStatus] = useState<RagStatus | null>(null);
 
   useEffect(() => {
     api.topics().then((ts) => {
       setTopics(ts);
       if (ts.length) setActiveTopic(ts[0].id);
     });
+    api.ragStatus().then(setRagStatus).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -43,14 +45,25 @@ export default function Dashboard() {
     <div className="space-y-8">
       <header className="space-y-3">
         <p className="text-[11px] font-mono uppercase tracking-[0.08em] text-[#9184d9]">
-          Live sentiment · Reddit + Google News, India
+          Live sentiment · Reddit + Google News + GDELT, India
         </p>
         <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight">Public Opinion Dashboard</h1>
         <p className="text-sm text-[#9ea3bb] max-w-2xl">
-          Sentiment aggregated from public Reddit discussion and Google News coverage per topic, with a
-          per-topic forecast for the next 3 days trained on the real accumulated history. X/Twitter is not
-          included — its API is paid-only, so it's omitted rather than faked.
+          Sentiment aggregated from public Reddit discussion, Google News, and GDELT's global news index per
+          topic, with a per-topic forecast for the next 3 days trained on the real accumulated history.
+          X/Twitter is not included — its API is paid-only, so it's omitted rather than faked.
         </p>
+        {ragStatus && (
+          <span
+            className="inline-block text-[11px] font-mono px-2.5 py-1 rounded-full border"
+            style={{
+              borderColor: ragStatus.sentiment_ml_available ? "#8fc7f055" : "rgba(242,243,250,0.1)",
+              color: ragStatus.sentiment_ml_available ? "#8fc7f0" : "#9397ab",
+            }}
+          >
+            Sentiment model: {ragStatus.sentiment_ml_available ? "RoBERTa via HF Inference API" : "VADER (rule-based fallback)"}
+          </span>
+        )}
       </header>
 
       <TopicSelector topics={topics} active={activeTopic} onSelect={setActiveTopic} />

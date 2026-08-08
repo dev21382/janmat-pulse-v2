@@ -54,6 +54,7 @@ def extract_atoms(pages: list[dict], party_id: str) -> list[dict]:
                     "number": m.group(1),
                     "text": atom_text,
                     "taxonomy_category": category,
+                    "taxonomy_method": "keyword",
                     "matched_keywords": matched_keywords,
                     "quantified": bool(_QUANTIFIED_RE.search(atom_text)),
                 }

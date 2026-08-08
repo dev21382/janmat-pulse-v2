@@ -8,7 +8,8 @@ CREATE TABLE IF NOT EXISTS opinion_items (
     created_utc INTEGER NOT NULL,     -- unix timestamp of the original post/article
     fetched_utc INTEGER NOT NULL,
     score REAL,                       -- reddit upvotes, null for news
-    sentiment REAL,                   -- VADER compound score, -1..1
+    sentiment REAL,                   -- compound score, -1..1
+    sentiment_method TEXT,            -- 'hf_roberta' (real ML classifier) | 'vader' (rule-based fallback)
     UNIQUE(topic_id, source, external_id)
 );
 
@@ -37,7 +38,8 @@ CREATE TABLE IF NOT EXISTS promise_atoms (
     number TEXT,
     text TEXT NOT NULL,
     taxonomy_category TEXT NOT NULL,
-    matched_keywords TEXT,            -- JSON array, for auditability of the tag
+    taxonomy_method TEXT NOT NULL DEFAULT 'keyword',  -- 'llm' (Groq classifier) | 'keyword' (fallback)
+    matched_keywords TEXT,            -- JSON array, for auditability of the tag (keyword method only)
     quantified INTEGER NOT NULL       -- 0/1: has a number/amount/date, vs. purely directional
 );
 

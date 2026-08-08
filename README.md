@@ -3,25 +3,34 @@
 Builds on [janmat-pulse](https://github.com/dev21382/janmat-pulse) — live sentiment tracking on Indian
 political topics, a forecast trained on that real data, and manifesto intelligence over the 2024 Lok
 Sabha party manifestos — and extends it toward the full [Political Intelligence Platform
-PRD](ROADMAP.md) this project is scoped against: a trust-first sentiment score legend, promise-atom-level
-manifesto RAG with a fixed comparison taxonomy, and a Promise-to-Performance scorecard. See
+PRD](ROADMAP.md) this project is scoped against: a trust-first sentiment score legend, ML-classified
+promise-atom-level manifesto RAG across five parties, and a Promise-to-Performance scorecard. See
 [ROADMAP.md](ROADMAP.md) for exactly what's built vs. explicitly deferred, and why.
 
 **Live app**: deployed on Render — see repo description for the current link. Free-tier hosting, so the
 first request after idle time can take ~50s to wake up.
 
-## New in v2
+## New in this revision
 
-- **Score legend + confidence bands** — every sentiment score sits next to a permanent -100..+100
-  band legend and a confidence badge tied to mention volume (High/Medium/Low), applied identically
-  to every topic.
-- **Manifesto RAG v2** — promise-atom extraction splits each manifesto on its own numbered
-  commitments (not fixed-width chunks), tags every atom to a fixed 10-category taxonomy, flags it
-  quantified vs. directional, and exposes a cross-party side-by-side comparison view per category.
-- **Delivery Scorecard v1** — Allocation Ratio / Utilization Rate / Delivery Index / Status
-  (including "Goalpost Moved" and "Not Proven" as first-class statuses) over a small,
-  independently-sourced seed dataset — explicitly not a live PFMS/CAG pipeline; see the in-app
-  disclosure and ROADMAP.md.
+Two rounds of changes so far. The first shipped the trust layer and manifesto/scorecard structure; the
+second replaced the two pieces that were doing rule-based/keyword approximation with real ML models, and
+materially expanded the data actually being ingested:
+
+- **Real ML sentiment classification** — [`cardiffnlp/twitter-roberta-base-sentiment-latest`](https://huggingface.co/cardiffnlp/twitter-roberta-base-sentiment-latest)
+  via Hugging Face's free Inference API is now the primary classifier (a supervised transformer, not a
+  rule-based scorer), used when `HF_API_TOKEN` is set. VADER remains as the offline fallback — every
+  stored item is tagged with which method actually scored it (`hf_roberta` or `vader`), never silently
+  blended.
+- **Real LLM-based promise taxonomy tagging** — Groq (`GROQ_API_KEY`, the same key already used for
+  generative RAG) classifies each promise-atom into the fixed 10-category taxonomy via batched chat
+  completions. Keyword matching is kept only as the offline fallback, and every atom is tagged with
+  which method classified it (`llm` or `keyword`).
+- **Manifesto corpus expanded from 3 parties to 5** — added TMC and DMK, and fixed BJP's manifesto
+  (bjp.org itself times out for automated fetches from every network tested; the same document is
+  mirrored reliably on [data.opencity.in](https://data.opencity.in)'s public elections-data catalog).
+  BJP text extraction and page structure were verified before switching sources.
+- **GDELT added as a second live news source** — the product spec's own top-recommended free source
+  ("100+ languages, 15-minute refresh, genuinely free, no key, no cap") alongside Google News RSS.
 
 ## What's actually live vs. documented as a limitation
 
@@ -30,23 +39,25 @@ the limitations are stated plainly rather than papered over.
 
 | Piece | Status |
 |---|---|
-| Reddit ingestion | Real, via Reddit's public unauthenticated `.json` search endpoint. Some cloud networks get rate-limited/blocked by Reddit's anti-bot measures — the pipeline degrades to News-only when that happens, rather than faking posts. |
-| News ingestion | Real, via Google News RSS. No API key needed. |
+| Reddit ingestion | Real, via Reddit's public unauthenticated `.json` search endpoint. Some cloud networks get rate-limited/blocked by Reddit's anti-bot measures — the pipeline degrades to News/GDELT-only when that happens, rather than faking posts. |
+| News ingestion | Real, two independent sources: Google News RSS and GDELT's DOC 2.0 API, both scoped per topic. No API key needed for either. |
 | X / Twitter | **Not included.** X's API is paid-only; rather than fake it, it's omitted. |
-| Sentiment scoring | Real, VADER (rule-based, no external calls). |
-| Forecast | A linear-trend estimate by default. The codebase also has a small PyTorch LSTM (`ENABLE_LSTM=true`) trained per-topic on the real accumulated daily sentiment history — disabled by default because torch's RSS footprint exceeds the 512MB ceiling on free-tier hosting (confirmed by an OOM kill in production). Enable it if you deploy somewhere with ~1GB+ RAM. **Forecast quality improves the longer the deployed instance runs and accrues more real days of data**, regardless of which method is active. |
-| Manifesto RAG — retrieval | Real. Official BJP/INC/CPI(M) 2024 manifesto PDFs, chunked, and ranked with TF-IDF + cosine similarity (scikit-learn) — chosen over transformer embeddings for the same memory-budget reason as the forecaster. |
+| Sentiment scoring | Real ML classification (`cardiffnlp/twitter-roberta-base-sentiment-latest` via Hugging Face's free Inference API) when `HF_API_TOKEN` is set; VADER (rule-based) otherwise. Every item stores which method scored it. |
+| Forecast | A linear-trend estimate by default. The codebase also has a small PyTorch LSTM (`ENABLE_LSTM=true`) trained per-topic on the real accumulated daily sentiment history — disabled by default because torch's RSS footprint exceeds the 512MB ceiling on free-tier hosting (confirmed by an OOM kill in production). Enable it if you deploy somewhere with ~1GB+ RAM. |
+| Manifesto RAG — retrieval | Real. Five parties' official 2024 manifesto PDFs (BJP, INC, CPI(M), TMC, DMK), chunked and ranked with TF-IDF + cosine similarity (scikit-learn) — chosen over transformer embeddings for the same memory-budget reason as the forecaster. |
 | Manifesto RAG — generation | Real when a free Groq API key is configured (see below); otherwise the app serves ranked, cited excerpts directly with no generation step — still fully functional, just without prose synthesis. |
-| Promise-atom extraction & taxonomy | Real. Regex-based extraction on the manifesto's own numbered lists, page-cited, tagged to a fixed 10-category taxonomy via keyword matching (not an ML classifier — matched keywords are shown for auditability). |
-| Cross-party promise comparison | Real. Side-by-side view per taxonomy category, built directly from the extracted promise-atoms. |
+| Promise-atom extraction | Real. Regex-based extraction on each manifesto's own numbered lists, page-cited. Only produces atoms where the source document actually numbers its commitments — INC, CPI(M) and DMK do; BJP's manifesto is written as flowing prose (zero numbered markers in the extracted text) and TMC's uses non-numeric bullets, so those two contribute few or no atoms. That's a real property of those documents, not a gap in extraction — both are still fully covered by the whole-document RAG chat. |
+| Promise-atom taxonomy tagging | Real LLM classification (Groq, batched) into the fixed 10-category taxonomy when `GROQ_API_KEY` is set; keyword-matching fallback otherwise (matched keywords shown for auditability either way). Every atom is tagged with which method classified it. |
+| Cross-party promise comparison | Real. Side-by-side view per taxonomy category across parties whose manifesto structure yields promise-atoms, built directly from the extracted data. |
 | Sentiment score legend + confidence bands | Real, always visible, same methodology applied to every topic. |
 | Delivery Scorecard | Real data model; a small **hand-curated, independently-sourced seed dataset** (4 entries, each cited to PIB/CAG/PRS), not a live budget/PFMS/CAG ingestion pipeline — see [ROADMAP.md](ROADMAP.md). |
 
 ## Architecture
 
 ```
-frontend/   React + Vite + TypeScript + Tailwind — Dashboard + Manifesto Chat
-backend/    FastAPI — ingestion, sentiment, forecast, RAG pipeline, REST API
+frontend/   React + Vite + TypeScript + Tailwind — Dashboard, Manifesto Chat, Compare, Scorecard
+backend/    FastAPI — ingestion (Reddit/News/GDELT), sentiment (ML + fallback), forecast, RAG
+            pipeline (retrieval + promise-atoms + LLM taxonomy), scorecard, REST API
 Dockerfile  Multi-stage build: builds the frontend, serves it as static files from FastAPI
 ```
 
@@ -76,21 +87,26 @@ pip install torch --index-url https://download.pytorch.org/whl/cpu
 ENABLE_LSTM=true uvicorn app.main:app --reload --port 8000
 ```
 
-## Enabling generative RAG answers
+## Enabling the ML tiers
 
-By default the manifesto chat works with zero configuration in retrieval-only mode: it returns
-the most relevant manifesto excerpts, ranked and cited. To get full generated, synthesized
-answers instead:
+All three of these default to a fully functional non-ML fallback with zero configuration. Each one
+upgrades independently when its key is set — none of them depend on each other.
 
-1. Get a free API key at [console.groq.com](https://console.groq.com) (no credit card required,
-   14,400 requests/day on the free tier).
-2. Set it as `GROQ_API_KEY` in your deployment platform's secrets (Render → Environment). Never
-   commit it to git — see `.env.example`.
+| Feature | Env var | Free key from |
+|---|---|---|
+| Generative RAG answers (vs. cited excerpts) | `GROQ_API_KEY` | [console.groq.com](https://console.groq.com) — 14,400 req/day, no card |
+| LLM promise-taxonomy tagging (vs. keyword matching) | `GROQ_API_KEY` (same key) | same as above |
+| ML sentiment classification (vs. VADER) | `HF_API_TOKEN` | [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens) — free, no card |
+
+Set these in your deployment platform's secrets (Render → Environment). Never commit them to git —
+see `.env.example`.
 
 ## Data sources
 
 - Reddit: `r/india`, `r/IndianPolitics`, `r/IndiaSpeaks`, `r/worldnews` via public search JSON.
-- News: Google News RSS, scoped per topic, India edition.
-- Manifestos: official party PDFs — [BJP Sankalp Patra](https://www.bjp.org/files/2024-04/Modi-Ki-Guarantee-Sankalp-Patra-English_2.pdf),
+- News: Google News RSS + GDELT DOC 2.0 API, both scoped per topic, India edition.
+- Manifestos (2024 Lok Sabha, official documents): [BJP Sankalp Patra](https://data.opencity.in/dataset/76e54184-f294-44e4-a40c-8594ccb410c8/resource/6210fb78-c1c3-4700-a61f-ed01daee9aff/download/7377fce3-f32d-4dba-8d1c-4969c25a3add.pdf),
   [INC Nyay Patra](https://manifesto.inc.in/assets/Congress-Manifesto-English-2024-Dyoxp_4E.pdf),
-  [CPI(M) Manifesto](https://cpim.org/wp-content/uploads/old/documents/election_manifesto_english_april_2024.pdf).
+  [CPI(M) Manifesto](https://cpim.org/wp-content/uploads/old/documents/election_manifesto_english_april_2024.pdf),
+  [TMC Didir Shopoth](https://data.opencity.in/dataset/76e54184-f294-44e4-a40c-8594ccb410c8/resource/628261ee-a164-4760-a475-7a7e10d78d44/download/5e073a4f-f293-4cb0-90f1-bf5847a0015b.pdf),
+  [DMK Manifesto](https://data.opencity.in/dataset/76e54184-f294-44e4-a40c-8594ccb410c8/resource/c86a0519-1a32-407c-8381-41659734f9a2/download/a7964b61-ee79-4f84-9e1b-e3e28be52e04.pdf).

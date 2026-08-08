@@ -29,7 +29,7 @@ def _pages_path(party_id: str):
     return MANIFESTO_DIR / f"{party_id}.pages.json"
 
 
-def download_manifesto(source: dict, timeout: float = 45.0) -> bool:
+def download_manifesto(source: dict, timeout: float = 90.0) -> bool:
     party_id = source["party_id"]
     text_path = _text_path(party_id)
     if text_path.exists():

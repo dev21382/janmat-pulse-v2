@@ -6,7 +6,7 @@ export type Topic = {
 };
 
 export type FeedItem = {
-  source: "reddit" | "news";
+  source: "reddit" | "news" | "gdelt";
   title: string;
   url: string;
   created_utc: number;
@@ -43,6 +43,8 @@ export type RagResponse = {
 export type RagStatus = {
   index_built: boolean;
   generative_available: boolean;
+  taxonomy_llm_available: boolean;
+  sentiment_ml_available: boolean;
   parties: { party_id: string; party_name: string; title: string; url: string; hue: string; ingested: boolean }[];
 };
 
@@ -70,6 +72,7 @@ export type PromiseAtom = {
   number: string;
   text: string;
   taxonomy_category: string;
+  taxonomy_method: "llm" | "keyword";
   matched_keywords: string[];
   quantified: boolean;
 };

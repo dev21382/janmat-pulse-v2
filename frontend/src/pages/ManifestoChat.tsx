@@ -48,8 +48,8 @@ export default function ManifestoChat() {
         </p>
         <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight">Manifesto Chat</h1>
         <p className="text-sm text-[#9ea3bb] max-w-2xl">
-          Ask questions across the BJP, INC and CPI(M) 2024 manifestos. Answers are grounded in retrieved
-          excerpts with citations — never invented.
+          Ask questions across the BJP, INC, CPI(M), TMC and DMK 2024 manifestos. Answers are grounded in
+          retrieved excerpts with citations — never invented.
         </p>
         {status && (
           <div className="flex flex-wrap gap-2 pt-1">
@@ -71,6 +71,24 @@ export default function ManifestoChat() {
                 Retrieval-only mode (no GROQ_API_KEY set)
               </span>
             )}
+            <span
+              className="text-[11px] font-mono px-2.5 py-1 rounded-full border"
+              style={{
+                borderColor: status.taxonomy_llm_available ? "#8fc7f055" : "rgba(242,243,250,0.1)",
+                color: status.taxonomy_llm_available ? "#8fc7f0" : "#9397ab",
+              }}
+            >
+              Promise tagging: {status.taxonomy_llm_available ? "LLM (Groq)" : "keyword fallback"}
+            </span>
+            <span
+              className="text-[11px] font-mono px-2.5 py-1 rounded-full border"
+              style={{
+                borderColor: status.sentiment_ml_available ? "#8fc7f055" : "rgba(242,243,250,0.1)",
+                color: status.sentiment_ml_available ? "#8fc7f0" : "#9397ab",
+              }}
+            >
+              Sentiment model: {status.sentiment_ml_available ? "RoBERTa (HF)" : "VADER fallback"}
+            </span>
           </div>
         )}
       </header>
