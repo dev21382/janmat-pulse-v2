@@ -14,6 +14,9 @@ export default function Nav() {
           <NavLink to="/" end className={linkClass}>
             Dashboard
           </NavLink>
+          <NavLink to="/search" className={linkClass}>
+            Search
+          </NavLink>
           <NavLink to="/manifestos" className={linkClass}>
             Manifesto Chat
           </NavLink>

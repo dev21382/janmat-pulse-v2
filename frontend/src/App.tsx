@@ -4,6 +4,7 @@ import Dashboard from "./pages/Dashboard";
 import ManifestoChat from "./pages/ManifestoChat";
 import PromiseCompare from "./pages/PromiseCompare";
 import Scorecard from "./pages/Scorecard";
+import Search from "./pages/Search";
 
 export default function App() {
   return (
@@ -15,6 +16,7 @@ export default function App() {
           <Route path="/manifestos" element={<ManifestoChat />} />
           <Route path="/compare" element={<PromiseCompare />} />
           <Route path="/scorecard" element={<Scorecard />} />
+          <Route path="/search" element={<Search />} />
         </Routes>
       </main>
     </div>

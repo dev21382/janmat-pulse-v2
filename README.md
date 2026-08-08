@@ -1,4 +1,4 @@
-# Janmat Pulse v2 — Political Intelligence Platform (Phase 0 + 1a)
+# Janmat Pulse v2 — Political Intelligence Platform (Phase 0 + 1a + 1b)
 
 Builds on [janmat-pulse](https://github.com/dev21382/janmat-pulse) — live sentiment tracking on Indian
 political topics, a forecast trained on that real data, and manifesto intelligence over the 2024 Lok
@@ -12,9 +12,18 @@ first request after idle time can take ~50s to wake up.
 
 ## New in this revision
 
-Two rounds of changes so far. The first shipped the trust layer and manifesto/scorecard structure; the
-second replaced the two pieces that were doing rule-based/keyword approximation with real ML models, and
-materially expanded the data actually being ingested:
+Three rounds of changes so far: the trust layer + manifesto/scorecard structure (Phase 0 + 1a), then
+replacing rule-based/keyword approximation with real ML models and expanding the ingested data, then
+Phase 1b's open search and evidence panel:
+
+- **Open search + evidence panel (Phase 1b, A8/A10)** — a free-text search bar not limited to the six
+  curated dashboard topics. Queries are expanded via a hand-curated India-politics synonym/
+  transliteration/hashtag dictionary (e.g. "GST" also matches "जीएसटी") before fanning out live to
+  Reddit + Google News, each capped at an 8-second timeout budget with a size-bounded 15-minute cache.
+  Results include an evidence panel of the top-2-by-reach items per sentiment bucket — reach is a real
+  engagement percentile for Reddit, an honestly-labeled recency percentile for News (no fabricated
+  engagement numbers for sources that don't have any). GDELT is deliberately excluded from this live
+  path since it self-throttles and stays a scheduled-ingestion-only source.
 
 - **Real ML sentiment classification** — [`cardiffnlp/twitter-roberta-base-sentiment-latest`](https://huggingface.co/cardiffnlp/twitter-roberta-base-sentiment-latest)
   via Hugging Face's free Inference API is now the primary classifier (a supervised transformer, not a
@@ -51,13 +60,16 @@ the limitations are stated plainly rather than papered over.
 | Cross-party promise comparison | Real. Side-by-side view per taxonomy category across parties whose manifesto structure yields promise-atoms, built directly from the extracted data. |
 | Sentiment score legend + confidence bands | Real, always visible, same methodology applied to every topic. |
 | Delivery Scorecard | Real data model; a small **hand-curated, independently-sourced seed dataset** (4 entries, each cited to PIB/CAG/PRS), not a live budget/PFMS/CAG ingestion pipeline — see [ROADMAP.md](ROADMAP.md). |
+| Open search (any topic, not just the curated 6) | Real, live, on-demand fan-out to Reddit + Google News with query expansion, per-source timeout budgets, and a bounded 15-minute cache. GDELT is excluded from this live path (self-throttled, ingestion-only). |
+| Evidence panel (top-2-by-reach per sentiment bucket) | Real. Reach is a genuine engagement percentile for Reddit (has upvotes); News items have no engagement metric at all, so their reach is an honestly-labeled recency percentile instead, never presented as equivalent to real engagement. Not CIB-filtered (see ROADMAP.md — no bot-laden source to filter yet). |
 
 ## Architecture
 
 ```
-frontend/   React + Vite + TypeScript + Tailwind — Dashboard, Manifesto Chat, Compare, Scorecard
+frontend/   React + Vite + TypeScript + Tailwind — Dashboard, Search, Manifesto Chat, Compare, Scorecard
 backend/    FastAPI — ingestion (Reddit/News/GDELT), sentiment (ML + fallback), forecast, RAG
-            pipeline (retrieval + promise-atoms + LLM taxonomy), scorecard, REST API
+            pipeline (retrieval + promise-atoms + LLM taxonomy), scorecard, on-demand search
+            (query expansion + evidence panel), REST API
 Dockerfile  Multi-stage build: builds the frontend, serves it as static files from FastAPI
 ```
 

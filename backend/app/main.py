@@ -12,6 +12,7 @@ from app.api import (
     routes_rag,
     routes_scorecard,
     routes_scoring,
+    routes_search,
     routes_topics,
 )
 from app.db.database import init_db
@@ -45,6 +46,7 @@ app.include_router(routes_forecast.router, prefix="/api")
 app.include_router(routes_rag.router, prefix="/api")
 app.include_router(routes_scoring.router, prefix="/api")
 app.include_router(routes_scorecard.router, prefix="/api")
+app.include_router(routes_search.router, prefix="/api")
 
 
 @app.get("/api/health")

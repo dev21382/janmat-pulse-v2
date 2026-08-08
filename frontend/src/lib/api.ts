@@ -113,6 +113,32 @@ export type ScorecardRollup = {
   entries: ScorecardEntry[];
 };
 
+export type SearchItem = {
+  source: "reddit" | "news";
+  title: string;
+  url: string;
+  created_utc: number;
+  score: number | null;
+  sentiment: number;
+  sentiment_method: "hf_roberta" | "vader";
+  bucket: "positive" | "neutral" | "negative";
+  reach_percentile: number;
+  reach_basis: "engagement" | "recency";
+};
+export type SearchResponse = {
+  query: string;
+  expanded_query: string;
+  reddit_ok: boolean;
+  news_ok: boolean;
+  item_count: number;
+  score_100: number;
+  band: string;
+  confidence: "High" | "Medium" | "Low";
+  evidence: { positive: SearchItem[]; neutral: SearchItem[]; negative: SearchItem[] };
+  items: SearchItem[];
+  cache_hit?: boolean;
+};
+
 async function json<T>(res: Response): Promise<T> {
   if (!res.ok) throw new Error(`API error ${res.status}`);
   return res.json();
@@ -137,4 +163,5 @@ export const api = {
     fetch(`/api/manifesto/compare/${encodeURIComponent(category)}`).then((r) => json<ComparisonResponse>(r)),
   scorecardRollup: () =>
     fetch("/api/scorecard/rollup").then((r) => json<{ rollups: ScorecardRollup[]; status_options: string[] }>(r)),
+  search: (q: string) => fetch(`/api/search?q=${encodeURIComponent(q)}`).then((r) => json<SearchResponse>(r)),
 };
